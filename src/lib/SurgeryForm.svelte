@@ -61,31 +61,47 @@
         surgeries = surgeries.filter(s => s.id !== idToRemove);
     }
 
+    // Configurable API base — point this at the Surg_sim backend (or a proxy
+    // that wraps it). Override at build time via VITE_API_BASE if needed.
+    const API_BASE = import.meta.env.VITE_API_BASE || '';
+
+    // Submission state for UI feedback
+    let submitting = false;
+    let submitError = null;
+    let predictions = null; // array of {procedure, surgeon, predictedMinutes}
+
     // Function to handle form submission
-    function postSurgeries() {
+    async function postSurgeries() {
         // Clean and prepare data for posting
         const dataToPost = surgeries.map(s => ({
-            ...s,
-            // Replace default "Select X" options with empty strings or null
             surgeon: s.surgeon === surgeons[0] ? null : s.surgeon,
             procedure: s.procedure === procedures[0] ? null : s.procedure,
             diagnosis: s.diagnosis === diagnoses[0] ? null : s.diagnosis,
-            // Ensure predictedStart is null if not set
             predictedStart: s.predictedStart || null
-        }));
+        })).filter(s => s.surgeon && s.procedure); // only fully-specified cases
 
-        console.log("Surgeries Data to Post:", dataToPost);
-        // --- IMPORTANT: Integrate your API call here ---
-        // Example: fetch('/api/surgeries', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify(dataToPost)
-        // })
-        // .then(response => response.json())
-        // .then(data => console.log('Success:', data))
-        // .catch((error) => console.error('Error:', error));
+        if (dataToPost.length === 0) {
+            submitError = "Add at least one surgery with a surgeon and procedure.";
+            return;
+        }
 
-        alert("Data logged to console. In a real app, it would be sent to your backend!");
+        submitting = true;
+        submitError = null;
+        predictions = null;
+        try {
+            const res = await fetch(`${API_BASE}/api/predict-duration`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ surgeries: dataToPost })
+            });
+            if (!res.ok) throw new Error(`Server responded ${res.status}`);
+            const json = await res.json();
+            predictions = json.predictions || json;
+        } catch (err) {
+            submitError = `Could not reach the scheduling service: ${err.message}`;
+        } finally {
+            submitting = false;
+        }
     }
 </script>
 
@@ -393,8 +409,25 @@ button[type="submit"]:hover {
         <span aria-hidden="true">+</span>
     </button>
 </div>
-    </form>
     <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: center;">
-            <button type="submit">Run Simulation</button>
+            <button type="submit" disabled={submitting}>{submitting ? 'Predicting…' : 'Run Simulation'}</button>
         </div>
+
+    {#if submitError}
+        <p style="color:#dc3545; margin-top:10px; text-align:center;">{submitError}</p>
+    {/if}
+
+    {#if predictions}
+        <div style="margin-top:16px;">
+            <h3 style="text-align:center;">Predicted Durations</h3>
+            <ul style="list-style:none; padding:0; max-width:420px; margin:0 auto;">
+                {#each predictions as p}
+                    <li style="display:flex; justify-content:space-between; padding:8px 12px; border-bottom:1px solid #eee;">
+                        <span>{p.procedure} — {p.surgeon}</span>
+                        <strong>{p.predictedMinutes} min</strong>
+                    </li>
+                {/each}
+            </ul>
+        </div>
+    {/if}
 </div>
