@@ -1,38 +1,23 @@
-# sv
+# surg_front
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+SvelteKit UI for a surgical scheduling dashboard. Clinicians add upcoming surgeries
+(surgeon, procedure, diagnosis, planned start) and the app submits them to a backend
+for duration prediction and scheduling.
 
-## Creating a project
+This frontend is the presentation layer for the **Surg_sim** engine (Rust), which
+simulates operating-room throughput using a feature-aware duration estimator.
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Status
 
-```bash
-# create a new project in the current directory
-npx sv create
+- Functional UI with additive surgery cards, form validation, and a results view.
+- Wired to POST to `/api/predict-duration` (configurable via `VITE_API_BASE`).
+- The backend it talks to lives in the private `Surg_sim` repository.
 
-# create a new project in my-app
-npx sv create my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Develop
 
 ```bash
+npm install
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+Set `VITE_API_BASE` to point at the scheduling service before running predictions.
