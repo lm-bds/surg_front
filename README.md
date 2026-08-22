@@ -1,23 +1,33 @@
 # surg_front
 
-SvelteKit UI for a surgical scheduling dashboard. Clinicians add upcoming surgeries
-(surgeon, procedure, diagnosis, planned start) and the app submits them to a backend
-for duration prediction and scheduling.
+A typed SvelteKit client for the [Surg_sim](https://github.com/lm-bds/Surg_sim) illustrative duration-prediction API.
 
-This frontend is the presentation layer for the **Surg_sim** engine (Rust), which
-simulates operating-room throughput using a feature-aware duration estimator.
+## Run
 
-## Status
-
-- Functional UI with additive surgery cards, form validation, and a results view.
-- Wired to POST to `/api/predict-duration` (configurable via `VITE_API_BASE`).
-- The backend it talks to lives in the private `Surg_sim` repository.
-
-## Develop
+Start the Rust API on port 3001, then:
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-Set `VITE_API_BASE` to point at the scheduling service before running predictions.
+Set `VITE_API_BASE` when the API is hosted elsewhere:
+
+```bash
+VITE_API_BASE=https://example.test npm run dev
+```
+
+## Verify
+
+```bash
+npm run check
+npm run lint
+npm run build
+npm audit
+```
+
+The interface validates each case, handles API and schema errors, and displays the returned duration predictions. The bundled model coefficients are demonstrations and are not clinically validated.
+
+## Licence
+
+MIT.
